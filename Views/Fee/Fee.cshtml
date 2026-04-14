@@ -1,0 +1,202 @@
+﻿@{
+    ViewData["Title"] = "Fee";
+}
+<div style="border:5px solid;height:900px;width:900px;padding:20px;border-radius:5px;">
+    <div style="border:2px solid;padding:15px;width:600px;margin:auto;border-radius:5px;">
+        <form method="post">
+            <center><h2 style="background-color:green">Fees Form</h2></center>
+
+            <input type="hidden" id="Id" name="Id" />
+
+            <b><label>Student Roll Number:</label><br><br></b>
+            <input type="text" id="StudentRollNumber" name="StudentRollNumber" style="width:550px;height:30px;" required><br><br>
+
+            <b><label>Amount:</label><br><br></b>
+            <input type="number" step="0.01" id="Amount" name="Amount" style="width:550px;height:30px;" required><br><br>
+
+            <b><label>Status:</label><br><br></b>
+            <select id="Status" name="Status" style="width:550px;height:30px;" required>
+                <option value="">Select Status</option>
+                <option value="Pending">Pending</option>
+                <option value="Paid">Paid</option>
+            </select><br><br>
+
+            <b><label>Due Date:</label><br><br></b>
+            <input type="date" id="DueDate" name="DueDate" style="width:550px;height:30px;" required><br><br>
+
+            <b><label>Paid Date:</label><br><br></b>
+            <input type="date" id="PaidDate" name="PaidDate" style="width:550px;height:30px;"><br><br>
+
+            <center>
+                <button type="button" onclick="checkAction()" style="width:100px;height:30px;background:gray;">
+                    Submit
+                </button>
+            </center>
+        </form>
+    </div>
+
+    <br>
+
+    <table id="feeTable" border="1" style="width:90%;margin:auto;text-align:center;border-collapse:collapse;">
+        <thead>
+            <tr style="background-color:lightgray;">
+                <th>ID</th>
+                <th>Student Roll No</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Due Date</th>
+                <th>Paid Date</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    function AddFee() {
+        var StudentRollNumber = $("#StudentRollNumber").val();
+        var Amount = $("#Amount").val();
+        var Status = $("#Status").val();
+        var DueDate = $("#DueDate").val();
+        var PaidDate = $("#PaidDate").val();
+
+        $.ajax({
+            url: '/Fee/Add',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                studentRollNumber: StudentRollNumber,
+                amount: Amount,
+                status: Status,
+                dueDate: DueDate,
+                paidDate: PaidDate
+            }),
+            success: function (res) {
+                alert(res.message);
+                GetAllFee();
+                clearForm();
+            },
+            error: function (err) {
+                alert("Insert failed.");
+                console.error(err);
+            }
+        });
+    }
+
+    function GetAllFee() {
+        $.ajax({
+            url: '/Fee/GetAll',
+            type: 'GET',
+            contentType: 'application/json',
+            success: function (res) {
+                const tbody = $("#feeTable tbody");
+                tbody.empty();
+
+                res.forEach(item => {
+                    tbody.append(`
+                        <tr>
+                            <td>${item.id}</td>
+                            <td>${item.studentRollNumber}</td>
+                            <td>${item.amount}</td>
+                            <td>${item.status}</td>
+                            <td>${item.dueDate ? item.dueDate.split('T')[0] : ''}</td>
+                            <td>${item.paidDate ? item.paidDate.split('T')[0] : ''}</td>
+                            <td>
+                                <button style="background-color:blue;" onclick="getById(${item.id})">Edit</button>
+                                <button style="background-color:lightgray;" onclick="DeleteFee(${item.id})">Delete</button>
+                            </td>
+                        </tr>
+                    `);
+                });
+            },
+            error: function (err) {
+                alert("Fetch failed.");
+                console.error(err);
+            }
+        });
+    }
+
+    function DeleteFee(id) {
+        if (!confirm("Are you sure to delete?")) return;
+        $.ajax({
+            url: '/Fee/Delete/' + id,
+            type: 'DELETE',
+            success: function (res) {
+                alert(res.message);
+                GetAllFee();
+            },
+            error: function (err) {
+                alert("Delete failed.");
+                console.error(err);
+            }
+        });
+    }
+
+         function getById(id) {
+        $.get('/Fee/GetById/' + id, function (res) {
+            $("#Id").val(res.id);
+            $("#StudentRollNumber").val(res.studentRollNumber);
+            $("#Amount").val(res.amount);
+            $("#Status").val(res.status);
+            $("#DueDate").val(res.dueDate ? res.dueDate.split('T')[0] : '');
+            $("#PaidDate").val(res.paidDate ? res.paidDate.split('T')[0] : '');
+
+            document.getElementById("btn").innerText = "Update";
+        });
+    }
+
+
+
+    function UpdateFee() {
+        var data = {
+            Id: $("#Id").val(),
+            StudentRollNumber: $("#StudentRollNumber").val(),
+            Amount: $("#Amount").val(),
+            Status: $("#Status").val(),
+            DueDate: $("#DueDate").val(),
+            PaidDate: $("#PaidDate").val()
+        };
+
+        $.ajax({
+            url: '/Fee/Update',
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function (res) {
+                alert(res.message);
+                GetAllFee();
+                clearForm();
+            },
+            error: function (err) {
+                alert("Update failed.");
+                console.error(err);
+            }
+        });
+    }
+
+    function checkAction() {
+        var id = $("#Id").val();
+        if (id && id !== "0") {
+            UpdateFee();
+        } else {
+            AddFee();
+        }
+    }
+
+      function clearForm() {
+        $("#Id").val("");
+        $("#StudentRollNumber").val("");
+        $("#Amount").val("");
+        $("#Status").val("");
+        $("#DueDate").val("");
+        $("#PaidDate").val("");
+
+       
+        document.getElementById("btn").innerText = "Submit";
+    }
+
+
+    window.onload = () => GetAllFee();
+</script>

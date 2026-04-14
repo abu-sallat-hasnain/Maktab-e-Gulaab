@@ -1,0 +1,206 @@
+﻿@{
+    ViewData["Title"] = "Session";
+}
+<div style="border:5px solid;height:auto;width:900px;padding:20px;border-radius:5px;">
+
+    <div style="border:2px solid;padding:15px;width:600px;margin:auto;border-radius:5px;">
+        <form method="post">
+            <center><h2 style="background-color:cyan">Session Form</h2></center>
+
+            <input type="hidden" id="Id" name="Id">
+
+            <b><label>Session Name:</label><br><br></b>
+            <input type="text" id="SessionName" style="width:550px;height:30px" name="SessionName" required><br><br>
+
+            <b><label>Start Date:</label><br><br></b>
+            <input type="date" id="StartDate" style="width:550px;height:30px" name="StartDate" required><br><br>
+
+            <b><label>End Date:</label><br><br></b>
+            <input type="date" id="EndDate" style="width:550px;height:30px" name="EndDate" required><br><br>
+
+            <b><label>Status:</label><br><br></b>
+            <select id="Status" style="width:550px;height:30px" name="Status" required>
+                <option value="">-- Select Status --</option>
+                <option value="Completed">Completed</option>
+                <option value="Pending">Pending</option>
+            </select><br><br>
+
+            <b><label>Remarks:</label><br><br></b>
+            <textarea id="Remarks" style="width:550px;height:60px" name="Remarks"></textarea><br><br>
+
+            <center>
+                <button type="button" id="btn" style="width:100px;height:30px;background:blue;" onclick="checkAction()">Submit</button><br><br>
+            </center>
+        </form>
+    </div>
+
+    <table id="SessionTable" border="1" style="width:90%;margin:auto;text-align:center;border-collapse:collapse;">
+        <thead>
+            <tr style="background-color:lightgray;">
+                <th>ID</th>
+                <th>Session Name</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Status</th>
+                <th>Remarks</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        function AddSession() {
+            var SessionName = $("#SessionName").val();
+            var StartDate = $("#StartDate").val();
+            var EndDate = $("#EndDate").val();
+            var Status = $("#Status").val();
+            var Remarks = $("#Remarks").val();
+
+            $.ajax({
+                url: '/Session/Add',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    sessionName: SessionName,
+                    startDate: StartDate,
+                    endDate: EndDate,
+                    status: Status,
+                    remarks: Remarks
+                }),
+                success: function (res) {
+                    alert(res.message);
+                    $("#SessionTable tbody").empty();
+                    GetAllSessions();
+                },
+                error: function (err) {
+                    alert("Insert failed.");
+                    console.error(err);
+                }
+            });
+        }
+
+        function GetAllSessions() {
+            $.ajax({
+                url: '/Session/GetAll',
+                type: 'GET',
+                contentType: 'application/json',
+                success: function (res) {
+                    const tbody = $("#SessionTable tbody");
+                    tbody.empty();
+
+                    res.forEach(item => {
+                        let row = `<tr>
+                            <td>${item.id}</td>
+                            <td>${item.sessionName}</td>
+                            <td>${new Date(item.startDate).toLocaleDateString()}</td>
+                            <td>${new Date(item.endDate).toLocaleDateString()}</td>
+                            <td>${item.status}</td>
+                            <td>${item.remarks}</td>
+                            <td>
+                                <button style="background-color:yellow;" onclick="getById(${item.id})">Edit</button>
+                                <button style="background-color:green;" onclick="DeleteRow(${item.id})">Delete</button>
+                            </td>
+                        </tr>`;
+                        tbody.append(row);
+                    });
+                },
+                error: function (err) {
+                    alert("Failed to load sessions.");
+                    console.error(err);
+                }
+            });
+        }
+
+        function DeleteRow(id) {
+            if (!confirm('Are you sure you want to delete this session?')) return;
+
+            $.ajax({
+                url: `/Session/DeleteRow/${id}`,
+                type: 'DELETE',
+                success: function (res) {
+                    alert(res.message);
+                    $("#SessionTable tbody").empty();
+                    GetAllSessions();
+                },
+                error: function (err) {
+                    alert("Failed to delete session.");
+                    console.error(err);
+                }
+            });
+        }
+
+        function getById(id) {
+            $.ajax({
+                url: '/Session/EditRow/' + id,
+                type: "GET",
+                contentType: 'application/json',
+                success: function (res) {
+                    $("#Id").val(res.id);
+                    $("#SessionName").val(res.sessionName);
+                    $("#StartDate").val(new Date(res.startDate).toISOString().split("T")[0]);
+                    $("#EndDate").val(new Date(res.endDate).toISOString().split("T")[0]);
+                    $("#Status").val(res.status);
+                    $("#Remarks").val(res.remarks);
+                },
+                error: function (err) {
+                    alert("Failed to fetch session details.");
+                    console.error(err);
+                }
+            });
+        }
+
+        function UpdateSession() {
+            var Id = $("#Id").val();
+            var SessionName = $("#SessionName").val();
+            var StartDate = $("#StartDate").val();
+            var EndDate = $("#EndDate").val();
+            var Status = $("#Status").val();
+            var Remarks = $("#Remarks").val();
+
+            $.ajax({
+                url: '/Session/Update',
+                type: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    id: Id,
+                    sessionName: SessionName,
+                    startDate: StartDate,
+                    endDate: EndDate,
+                    status: Status,
+                    remarks: Remarks
+                }),
+                success: function (res) {
+                    alert(res.message);
+                    $("#SessionTable tbody").empty();
+                    GetAllSessions();
+
+                    $("#Id").val("");
+                    $("#SessionName").val("");
+                    $("#StartDate").val("");
+                    $("#EndDate").val("");
+                    $("#Status").val("");
+                    $("#Remarks").val("");
+                },
+                error: function (err) {
+                    alert("Update failed.");
+                    console.error(err);
+                }
+            });
+        }
+
+        function checkAction() {
+            var Id = $("#Id").val();
+            if (Id && Id !== "0") {
+                UpdateSession();
+            } else {
+                AddSession();
+            }
+        }
+
+        $(document).ready(function () {
+            GetAllSessions();
+        });
+    </script>
+</div>

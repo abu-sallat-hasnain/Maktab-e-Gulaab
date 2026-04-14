@@ -1,0 +1,190 @@
+﻿@{
+    ViewData["Title"] = "Result";
+}
+<div style="border:5px solid;height:900px;width:900px;padding:20px;border-radius:5px;">
+    <div style="border:2px solid;padding:15px;width:600px;margin:auto;border-radius:5px;">
+        <form method="post" onsubmit="return false;">
+            <center><h2 style="background-color:yellow">Result Form</h2></center>
+
+            <input type="hidden" id="Id" name="Id">
+
+            <b><label>Student Roll Number:</label><br><br></b>
+            <input type="text" id="StudentRollNumber" style="width:550px; height:30px" required><br><br>
+
+            <b><label>Subject Code:</label><br><br></b>
+            <input type="text" id="SubjectCode" style="width:550px; height:30px" required><br><br>
+
+            <b><label>Marks Obtained:</label><br><br></b>
+            <input type="number" step="0.01" id="MarksObtained" style="width:550px; height:30px" required><br><br>
+
+            <b><label>Total Marks:</label><br><br></b>
+            <input type="number" step="0.01" id="TotalMarks" style="width:550px; height:30px" required><br><br>
+
+            <b><label>Grade:</label><br><br></b>
+            <select id="Grade" style="width:550px; height:30px" required>
+                <option value="">Select Grade</option>
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+                <option value="D">D</option>
+            </select><br><br>
+
+            <center>
+                <button type="button" id="btn" onclick="checkAction()" style="width:100px;height:30px;background:gray;">
+                    Submit
+                </button>
+
+
+            </center>
+        </form>
+    </div>
+
+    <table id="ResultTable" border="1" style="width:90%;margin:auto;text-align:center;border-collapse:collapse;">
+        <thead>
+            <tr style="background-color:lightgray;">
+                <th>ID</th>
+                <th>Student Roll Number</th>
+                <th>Subject Code</th>
+                <th>Marks Obtained</th>
+                <th>Total Marks</th>
+                <th>Grade</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    function AddResult() {
+        var data = {
+            studentRollNumber: $("#StudentRollNumber").val(),
+            subjectCode: $("#SubjectCode").val(),
+            marksObtained: $("#MarksObtained").val(),
+            totalMarks: $("#TotalMarks").val(),
+            grade: $("#Grade").val()
+        };
+
+        $.ajax({
+            url: '/Result/Add',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function (res) {
+                alert(res.message);
+                $("#ResultTable tbody").empty();
+                GetAllResults();
+                clearForm();
+            },
+            error: function (err) {
+                alert("Insert failed.");
+                console.error(err);
+            }
+        });
+    }
+
+    function GetAllResults() {
+        $.ajax({
+            url: '/Result/GetAll',
+            type: 'GET',
+            success: function (res) {
+                const tbody = $("#ResultTable tbody");
+                tbody.empty();
+                res.forEach(item => {
+                    tbody.append(`
+                        <tr>
+                            <td>${item.id}</td>
+                            <td>${item.studentRollNumber}</td>
+                            <td>${item.subjectCode}</td>
+                            <td>${item.marksObtained}</td>
+                            <td>${item.totalMarks}</td>
+                            <td>${item.grade}</td>
+                            <td>
+                                <button style="background:blue;color:white;" onclick="getById(${item.id})">Edit</button>
+                                <button style="background:gray;" onclick="DeleteResult(${item.id})">Delete</button>
+                            </td>
+                        </tr>
+                    `);
+                });
+            }
+        });
+    }
+
+    function DeleteResult(id) {
+        if (!confirm("Are you sure you want to delete this record?")) return;
+        $.ajax({
+            url: '/Result/DeleteRow/' + id,
+            type: 'DELETE',
+            success: function (res) {
+                alert(res.message);
+                GetAllResults();
+            }
+        });
+    }
+
+    function getById(id) {
+        $.ajax({
+            url: '/Result/EditRow/' + id,
+            type: 'GET',
+            success: function (res) {
+                $("#Id").val(res.id);
+                $("#StudentRollNumber").val(res.studentRollNumber);
+                $("#SubjectCode").val(res.subjectCode);
+                $("#MarksObtained").val(res.marksObtained);
+                $("#TotalMarks").val(res.totalMarks);
+                $("#Grade").val(res.grade);
+
+            
+                document.getElementById("btn").innerText = "Update";
+            }
+        });
+    }
+
+
+    function UpdateResult() {
+        var data = {
+            id: $("#Id").val(),
+            studentRollNumber: $("#StudentRollNumber").val(),
+            subjectCode: $("#SubjectCode").val(),
+            marksObtained: $("#MarksObtained").val(),
+            totalMarks: $("#TotalMarks").val(),
+            grade: $("#Grade").val()
+        };
+
+        $.ajax({
+            url: '/Result/Update',
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function (res) {
+                alert(res.message);
+                GetAllResults();
+                clearForm();
+            }
+        });
+    }
+
+    function checkAction() {
+        var id = $("#Id").val();
+        if (id && id !== "0") {
+            UpdateResult();
+        } else {
+            AddResult();
+        }
+    }
+
+      function clearForm() {
+        $("#Id").val("");
+        $("#StudentRollNumber").val("");
+        $("#SubjectCode").val("");
+        $("#MarksObtained").val("");
+        $("#TotalMarks").val("");
+        $("#Grade").val("");
+
+        document.getElementById("btn").innerText = "Submit"; 
+    }
+
+
+    window.onload = () => GetAllResults();
+</script>

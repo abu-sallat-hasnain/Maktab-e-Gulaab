@@ -1,0 +1,205 @@
+﻿@{
+    ViewData["Title"] = "Student";
+}
+<div style="border:5px solid;height:900px;width:900px;padding:20px;border-radius:5px;">
+    <div style="border:2px solid;padding:15px;width:600px;margin:auto;border-radius:5px;">
+        <form method="post" onsubmit="return false;">
+            <center><h2 style="background-color:gray">Student Form</h2></center>
+
+            <input type="hidden" id="Id" name="Id">
+
+            <b><label>Roll Number:</label><br><br></b>
+            <input type="text" id="RollNumber" name="RollNumber" style="width:550px;height:30px" required><br><br>
+
+            <b><label>Name:</label><br><br></b>
+            <input type="text" id="Name" name="Name" style="width:550px;height:30px" required><br><br>
+
+            <b><label>CNIC:</label><br><br></b>
+            <input type="text" id="CNIC" name="CNIC" style="width:550px;height:30px" required><br><br>
+
+            <b><label>Date of Birth:</label><br><br></b>
+            <input type="date" id="DateOfBirth" name="DateOfBirth" style="width:550px;height:30px" required><br><br>
+
+            <b><label>Contact Number:</label><br><br></b>
+            <input type="tel" id="ContactNumber" name="ContactNumber" style="width:550px;height:30px" required><br><br>
+
+            <center>
+                <button type="button" onclick="checkAction()" style="width:100px;height:30px;background:red;">
+                    Submit
+                </button><br><br>
+            </center>
+        </form>
+    </div>
+
+    <table id="StudentTable" border="1" style="width:90%;margin:auto;text-align:center;border-collapse:collapse;">
+        <thead>
+            <tr style="background-color:lightgray;">
+                <th>ID</th>
+                <th>Roll Number</th>
+                <th>Name</th>
+                <th>CNIC</th>
+                <th>Date of Birth</th>
+                <th>Contact Number</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    // ✅ Add Student
+    function AddStudent() {
+        var data = {
+            rollNumber: $("#RollNumber").val(),
+            name: $("#Name").val(),
+            cnic: $("#CNIC").val(),
+            dateOfBirth: $("#DateOfBirth").val(),
+            contactNumber: $("#ContactNumber").val()
+        };
+
+        $.ajax({
+            url: '/Student/Add',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function (res) {
+                alert(res.message);
+                $("#StudentTable tbody").empty();
+                GetAllStudents();
+                clearForm();
+            },
+            error: function (err) {
+                alert("Insert failed.");
+                console.error(err);
+            }
+        });
+    }
+
+    // ✅ Get All Students
+    function GetAllStudents() {
+        $.ajax({
+            url: '/Student/GetAll',
+            type: 'GET',
+            contentType: 'application/json',
+            success: function (res) {
+                const tbody = $("#StudentTable tbody");
+                tbody.empty();
+                res.forEach(item => {
+                    tbody.append(`
+                        <tr>
+                            <td>${item.id}</td>
+                            <td>${item.rollNumber}</td>
+                            <td>${item.name}</td>
+                            <td>${item.cnic}</td>
+                            <td>${item.dateOfBirth.split('T')[0]}</td>
+                            <td>${item.contactNumber}</td>
+                            <td>
+                                <button style="background-color:blue;" onclick="getById(${item.id})">Edit</button>
+                                <button style="background-color:lightgray;" onclick="DeleteStudent(${item.id})">Delete</button>
+                            </td>
+                        </tr>
+                    `);
+                });
+            },
+            error: function (err) {
+                alert("Failed to fetch students.");
+                console.error(err);
+            }
+        });
+    }
+
+    // ✅ Delete Student
+    function DeleteStudent(id) {
+        if (!confirm("Are you sure you want to delete this student?")) {
+            return;
+        }
+        $.ajax({
+            url: `/Student/DeleteRow/${id}`,
+            type: 'DELETE',
+            success: function (res) {
+                alert(res.message);
+                $("#StudentTable tbody").empty();
+                GetAllStudents();
+            },
+            error: function (err) {
+                alert("Delete failed.");
+                console.error(err);
+            }
+        });
+    }
+
+    // ✅ Get Student By Id
+    function getById(id) {
+        $.ajax({
+            url: '/Student/EditRow/' + id,
+            type: 'GET',
+            contentType: 'application/json',
+            success: function (res) {
+                $("#Id").val(res.id);
+                $("#RollNumber").val(res.rollNumber);
+                $("#Name").val(res.name);
+                $("#CNIC").val(res.cnic);
+                $("#DateOfBirth").val(res.dateOfBirth.split('T')[0]);
+                $("#ContactNumber").val(res.contactNumber);
+            },
+            error: function (err) {
+                alert("Failed to fetch student details.");
+                console.error(err);
+            }
+        });
+    }
+
+    // ✅ Update Student
+    function UpdateStudent() {
+        var data = {
+            id: $("#Id").val(),
+            rollNumber: $("#RollNumber").val(),
+            name: $("#Name").val(),
+            cnic: $("#CNIC").val(),
+            dateOfBirth: $("#DateOfBirth").val(),
+            contactNumber: $("#ContactNumber").val()
+        };
+
+        $.ajax({
+            url: '/Student/Update',
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function (res) {
+                alert(res.message);
+                $("#StudentTable tbody").empty();
+                GetAllStudents();
+                clearForm();
+            },
+            error: function (err) {
+                alert("Update failed.");
+                console.error(err);
+            }
+        });
+    }
+
+    // ✅ Check Add or Update
+    function checkAction() {
+        var Id = $("#Id").val();
+        if (Id && Id !== "0") {
+            UpdateStudent();
+        } else {
+            AddStudent();
+        }
+    }
+
+    // ✅ Clear Form
+    function clearForm() {
+        $("#Id").val("");
+        $("#RollNumber").val("");
+        $("#Name").val("");
+        $("#CNIC").val("");
+        $("#DateOfBirth").val("");
+        $("#ContactNumber").val("");
+    }
+
+    // ✅ Auto Load All Students on Page Load
+    window.onload = () => GetAllStudents();
+</script>

@@ -1,0 +1,215 @@
+﻿@{
+    ViewData["Title"] = "Section";
+}
+<div style="border:5px solid;height:900px;width:900px;padding:20px;border-radius:5px;">
+
+    <div style="border:2px solid;padding:15px;width:600px;margin:auto;border-radius:5px;">
+        <form method="post">
+            <center><h2 style="background-color:blue;color:white;">Section Form</h2></center>
+
+            <input type="hidden" id="Id" name="Id">
+
+            <b><label>Section Name:</label><br><br></b>
+            <input type="text" id="Name" name="Name" style="width:550px;height: 30px" required><br><br>
+
+            <b><label>Shift:</label><br><br></b>
+            <select id="Shift" name="Shift" style="width:550px;height: 30px" required>
+                <option value="">-- Select Shift --</option>
+                <option value="Morning">Morning</option>
+                <option value="Evening">Evening</option>
+            </select><br><br>
+
+            <b><label>Strength:</label><br><br></b>
+            <input type="number" id="Strength" name="Strength" style="width:550px;height: 30px" required><br><br>
+
+            <b><label>Floor:</label><br><br></b>
+            <input type="text" id="Floor" name="Floor" style="width:550px;height: 30px" required><br><br>
+
+            <b><label>Room Number:</label><br><br></b>
+            <input type="text" id="RoomNumber" name="RoomNumber" style="width:550px;height: 30px" required><br><br>
+
+            <center>
+                <button type="button" id="btn" onclick="checkAction()"
+                        style="width:100px;height:30px;background:gray;color:white;">
+                    Submit
+                </button>
+
+            </center>
+        </form>
+    </div>
+
+    <table id="SectionTable" border="1" style="width:90%;margin:auto;text-align:center;border-collapse:collapse;">
+        <thead>
+            <tr style="background-color:lightgray;">
+                <th>ID</th>
+                <th>Section Name</th>
+                <th>Shift</th>
+                <th>Strength</th>
+                <th>Floor</th>
+                <th>Room Number</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    function AddSection() {
+        var Name = $("#Name").val();
+        var Shift = $("#Shift").val();
+        var Strength = $("#Strength").val();
+        var Floor = $("#Floor").val();
+        var RoomNumber = $("#RoomNumber").val();
+
+        $.ajax({
+            url: '/Section/Add',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                name: Name,
+                shift: Shift,
+                strength: Strength,
+                floor: Floor,
+                roomNumber: RoomNumber
+            }),
+            success: function (res) {
+                alert(res.message);
+                $("#SectionTable tbody").empty();
+                GetAllSections();
+            },
+            error: function (err) {
+                alert("Insert failed.");
+                console.error(err);
+            }
+        });
+    }
+
+    function GetAllSections() {
+        $.ajax({
+            url: '/Section/GetAll',
+            type: 'GET',
+            contentType: 'application/json',
+            success: function (res) {
+                const tbody = document.querySelector("#SectionTable tbody");
+                tbody.innerHTML = "";
+
+                res.forEach(item => {
+                    let row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td>${item.id}</td>
+                        <td>${item.name}</td>
+                        <td>${item.shift}</td>
+                        <td>${item.strength}</td>
+                        <td>${item.floor}</td>
+                        <td>${item.roomNumber}</td>
+                        <td>
+                            <button style="background-color:blue;color:white;" onclick="getById(${item.id})">Edit</button>
+                            <button style="background-color:lightgray;" onclick="DeleteRow(${item.id})">Delete</button>
+                        </td>`;
+                    tbody.appendChild(row);
+                });
+            },
+            error: function (err) {
+                alert("Failed to load sections.");
+                console.error(err);
+            }
+        });
+    }
+
+    function DeleteRow(id) {
+        if (!confirm('Are you sure you want to delete this section?')) {
+            return;
+        }
+        $.ajax({
+            url: `/Section/DeleteRow/${id}`,
+            type: 'DELETE',
+            success: function (res) {
+                alert(res.message);
+                $("#SectionTable tbody").empty();
+                GetAllSections();
+            },
+            error: function (err) {
+                alert('Failed to delete section');
+                console.error(err);
+            }
+        });
+    }
+
+      function getById(id) {
+        $.ajax({
+            url: '/Section/EditRow/' + id,
+            type: "GET",
+            contentType: 'application/json',
+            success: function (res) {
+                $("#Id").val(res.id);
+                $("#Name").val(res.name);
+                $("#Shift").val(res.shift);
+                $("#Strength").val(res.strength);
+                $("#Floor").val(res.floor);
+                $("#RoomNumber").val(res.roomNumber);
+
+                document.getElementById("btn").innerText = "Update";
+            },
+            error: function (err) {
+                alert("Failed to fetch section.");
+                console.error(err);
+            }
+        });
+    }
+
+
+    function UpdateSection() {
+        var Id = $("#Id").val();
+        var Name = $("#Name").val();
+        var Shift = $("#Shift").val();
+        var Strength = $("#Strength").val();
+        var Floor = $("#Floor").val();
+        var RoomNumber = $("#RoomNumber").val();
+
+        $.ajax({
+            url: '/Section/Update',
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                id: Id,
+                name: Name,
+                shift: Shift,
+                strength: Strength,
+                floor: Floor,
+                roomNumber: RoomNumber
+            }),
+            success: function (res) {
+                alert(res.message);
+
+             document.getElementById("btn").innerText = "Submit";
+
+                $("#SectionTable tbody").empty();
+                GetAllSections();
+
+                $("#Id").val("");
+                $("#Name").val("");
+                $("#Shift").val("");
+                $("#Strength").val("");
+                $("#Floor").val("");
+                $("#RoomNumber").val("");
+            },
+            error: function (err) {
+                alert("Update failed.");
+                console.error(err);
+            }
+        });
+    }
+
+    function checkAction() {
+        var Id = $("#Id").val();
+        if (Id && Id !== "0") {
+            UpdateSection();
+        } else {
+            AddSection();
+        }
+    }
+
+    window.onload = () => GetAllSections();
+</script>

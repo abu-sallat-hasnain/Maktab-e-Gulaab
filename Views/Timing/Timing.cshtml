@@ -1,0 +1,32 @@
+﻿@{
+    ViewData["Title"] = "Subject";
+}
+<h2>Subject Form</h2>
+
+<div style="border:2px solid;padding:15px;width:600px;margin:auto;border-radius:5px;">
+    <form action="ThankYou.html" method="POST" class="contact_form_wrapper">
+
+        <label class="contact_form_label">Subject Code:</label><br>
+        <input type="text" name="Code" style="width:550px;" required class="contact_form_input"><br><br>
+
+        <label class="contact_form_label">Subject Name:</label><br>
+        <input type="text" name="Name" style="width:550px;" required class="contact_form_input"><br><br>
+
+        <label class="contact_form_label">Credit Hours:</label><br>
+        <input type="number" name="CreditHours" style="width:550px;" required class="contact_form_input"><br><br>
+
+        <label class="contact_form_label">Type:</label><br>
+        <input type="text" name="Type" style="width:550px;" required class="contact_form_input"><br><br>
+
+        <label class="contact_form_label">Description:</label><br>
+        <textarea name="Description" rows="4" cols="20" style="width:550px;" class="contact_form_textarea"></textarea><br><br>
+
+        <input type="submit" onclick="Data()" value="Submit Subject" class="contact_form_submit">
+    </form>
+</div>
+
+<script>
+    function Data() {
+        alert("Subject data submitted successfully!");
+    }
+</script>

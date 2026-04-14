@@ -1,0 +1,155 @@
+﻿@{
+    ViewData["Title"] = "Teacher";
+}
+<div style="border:5px solid;height:950px;width:900px;padding:20px;border-radius:5px;">
+    <div style="border:2px solid;padding:15px;width:600px;margin:auto;border-radius:5px;">
+        <form method="post">
+            <center><h2 style="background-color:chocolate">Teacher Form</h2></center>
+
+            <input type="hidden" id="Id" name="Id">
+
+            <b> <label>Full Name:</label><br><br></b>
+            <input type="text" id="FullName" name="FullName" style="width:550px; height:30px" required><br><br>
+
+            <b><label>Qualification:</label><br><br></b>
+            <input type="text" id="Qualification" name="Qualification" style="width:550px; height:30px" required><br><br>
+
+            <b> <label>Contact Number:</label><br><br></b>
+            <input type="tel" id="ContactNumber" name="ContactNumber" style="width:550px; height:30px"><br><br>
+
+            <b> <label>Email:</label><br><br></b>
+            <input type="email" id="Email" name="Email" style="width:550px; height:30px" required><br><br>
+
+            <b> <label>Department Id:</label><br><br></b>
+            <input type="number" id="DepartmentId" name="DepartmentId" style="width:550px; height:30px" required><br><br>
+
+            <center>
+                <button type="button" onclick="checkAction()" style="width:100px;height:30px;background:red;">
+                    Submit
+                </button><br><br>
+            </center>
+        </form>
+    </div>
+
+    <table id="teacherTable" border="1" style="width:90%;margin:auto;text-align:center;border-collapse:collapse;">
+        <thead>
+            <tr style="background-color:lightgray;">
+                <th>ID</th>
+                <th>Full Name</th>
+                <th>Qualification</th>
+                <th>Contact Number</th>
+                <th>Email</th>
+                <th>Department Id</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    function AddTeacher() {
+        var teacher = {
+            fullName: $("#FullName").val(),
+            qualification: $("#Qualification").val(),
+            contactNumber: $("#ContactNumber").val(),
+            email: $("#Email").val(),
+            departmentId: $("#DepartmentId").val()
+        };
+
+        $.ajax({
+            url: '/Teacher/Add',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(teacher),
+            success: function (res) {
+                alert(res.message);
+                clearForm();
+                GetAllTeachers();
+            },
+            error: function (err) {
+                alert("Insert failed.");
+                console.error(err);
+            }
+        });
+    }
+
+    function GetAllTeachers() {
+        $.ajax({
+            url: '/Teacher/GetAll',
+            type: 'GET',
+            contentType: 'application/json',
+            success: function (res) {
+                const tbody = document.querySelector("#teacherTable tbody");
+                tbody.innerHTML = "";
+
+                res.forEach(item => {
+                    let row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td>${item.id}</td>
+                        <td>${item.fullName}</td>
+                        <td>${item.qualification}</td>
+                        <td>${item.contactNumber}</td>
+                        <td>${item.email}</td>
+                        <td>${item.departmentId}</td>
+                        <td>
+                            <button style="background-color:blue;" onclick="getById(${item.id})">Edit</button>
+                            <button style="background-color:lightgray;" onclick="DeleteRow(${item.id})">Delete</button>
+                        </td>`;
+                    tbody.appendChild(row);
+                });
+            },
+            error: function (err) {
+                alert("Failed to load teachers.");
+                console.error(err);
+            }
+        });
+    }
+
+    function DeleteRow(id) {
+        if (!confirm('Are you sure you want to delete this teacher?')) {
+            return;
+        }
+        $.ajax({
+            url: `/Teacher/DeleteRow/${id}`,
+            type: 'DELETE',
+            success: function (res) {
+                alert(res.message);
+                GetAllTeachers();
+            },
+            error: function (err) {
+                alert('Failed to delete teacher');
+                console.error(err);
+            }
+        });
+    }
+
+    function getById(id) {
+        $.ajax({
+            url: '/Teacher/EditRow/' + id,
+            type: "GET",
+            contentType: 'application/json',
+            success: function (res) {
+                $("#Id").val(res.id);
+                $("#FullName").val(res.fullName);
+                $("#Qualification").val(res.qualification);
+                $("#ContactNumber").val(res.contactNumber);
+                $("#Email").val(res.email);
+                $("#DepartmentId").val(res.departmentId);
+            },
+            error: function (err) {
+                console.error('Error fetching teacher:', err);
+                alert("Failed to fetch teacher details.");
+            }
+        });
+    }
+
+    function UpdateTeacher() {
+        var teacher = {
+            id: $("#Id").val(),
+            fullName: $("#FullName").val(),
+            qualification: $("#Qualification").val(),
+            contactNumber: $("#ContactNumber").val(),
+            email: $("#Email").val(),
+            departmentId: $("#DepartmentId").val()

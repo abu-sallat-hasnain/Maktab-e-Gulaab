@@ -1,0 +1,213 @@
+﻿@{
+    ViewData["Title"] = "Class";
+}
+<div style="border:5px solid;height:px;width:800px;padding:20px;border-radius:5px;">
+    <div style="border:2px solid;padding:15px;width:600px;margin:auto;border-radius:5px;">
+    
+    <form method="post">
+        <center><h2 style="background-color:purple">Class Form</h2></center>
+
+        <input type="hidden" id="Id" name="Id">
+
+        <b> <label>Name:</label><br><br></b>
+        <input type="text" id="Name" style="width:600px; height: 30px" name="Name" required><br><br>
+
+        <b><label>Code:</label><br><br></b>
+        <input type="text" id="Code" style="width:600px; height: 30px" name="Code" required><br><br>
+
+        <b><label>Total Students:</label><br><br></b>
+        <input type="text" id="TotalStudents" style="width:600px; height: 30px" name="TotalStudents" required><br><br>
+
+        <b><label>Medium:</label><br><br></b>
+        <input type="text" id="Medium" style="width:600px; height: 30px" name="Medium" required><br><br>
+
+        <b><label>Description:</label><br><br></b>
+        <textarea id="Description" style="width:600px; height: 30px" name="Description"></textarea><br><br>
+
+        <center>
+            <button type="button" id="btn"
+                    style="background:gray; width:100px; height: 30px"
+                    onclick="checkAction()">
+                Submit
+            </button><br><br><br>
+        </center>
+        </form>
+        </div>
+        <table id="classTable" border="1" style="width:100%; text-align:center; border-collapse:collapse;">
+            <thead>
+                <tr style="background-color:lightgray;">
+                    <th>Id</th>
+                    <th>Name</th>
+                    <th>Code</th>
+                    <th>Total Students</th>
+                    <th>Medium</th>
+                    <th>Description</th>
+                    <th>Action</th>
+                </tr>
+
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+        function AddUser() {           
+              var Name = document.getElementById('Name').value;
+              var Code = document.getElementById('Code').value;
+              var TotalStudents = document.getElementById('TotalStudents').value;
+              var Medium = document.getElementById('Medium').value;
+              var Description = document.getElementById('Description').value;
+
+              $.ajax({
+                  url: '/Class/Add',
+                  type: 'POST',
+                  contentType: 'application/json',
+                  data: JSON.stringify({
+                      name: Name,
+                      code: Code,
+                      totalStudents: TotalStudents,
+                      medium: Medium,
+                      description: Description
+                  }),
+                  success: function (res) {
+                      alert(res.message);
+                      $("#classTable tbody").empty();
+                      GetAllClass();
+                  },
+                  error: function (err) {
+                      alert("Insert failed.");
+                      console.error(err);
+                  }
+              });
+          }
+
+          function GetAllClass() {
+              $.ajax({
+                  url: '/Class/GetAll',
+                  type: 'GET',
+                  contentType: 'application/json',
+                  success: function (res) {
+                      const tbody = document.querySelector("#classTable tbody");
+                      tbody.innerHTML = "";
+
+                      res.forEach(item => {
+                          let row = document.createElement("tr");
+                          row.innerHTML = `
+                              <td>${item.id}</td>
+                              <td>${item.name}</td>
+                              <td>${item.code}</td>
+                              <td>${item.totalStudents}</td>
+                              <td>${item.medium}</td>
+                              <td>${item.description}</td>
+                              <td>
+                                  <button style="background-color:blue;" onclick="getById(${item.id})">Edit</button>
+                                  <button style="background-color:lightgray;" onclick="DeleteRow(${item.id})">Delete</button>
+                              </td>`;
+                          tbody.appendChild(row);
+                      });
+                  },
+                  error: function (err) {
+                      alert("Update fail");
+                      console.error(err);
+                  }
+              });
+          }
+
+          function DeleteRow(classId) {
+              if (!confirm('Are you sure you want to delete this class?')) {
+                  return;
+              }
+              $.ajax({
+                  url: `/Class/DeleteRow/${classId}`,
+                  type: 'DELETE',
+                  success: function (res) {
+                      alert(res.message);
+                      $("#classTable tbody").empty();
+                      GetAllClass();
+                  },
+                  error: function (err) {
+                      alert('Failed to delete class: ' + (err.responseJSON?.message || 'Unknown error'));
+                      console.error(err);
+                  }
+              });
+          }
+
+          function getById(id) {
+              $.ajax({
+                  url: '/Class/EditRow/' + id,
+                  type: "GET",
+                  contentType: 'application/json',
+                  success: function (res) {
+                      document.getElementById("Id").value = res.id;
+                      document.getElementById("Name").value = res.name;
+                      document.getElementById("Code").value = res.code;
+                      document.getElementById("TotalStudents").value = res.totalStudents;
+                      document.getElementById("Medium").value = res.medium;
+                      document.getElementById("Description").value = res.description;
+
+
+                      document.getElementById("btn").innerText = "Update";
+
+                  },
+                  error: function (err) {
+                      console.error('Error fetching class:', err);
+                      alert("Failed to fetch class details.");
+                  }
+              });
+          }
+          function UpdateUser() {
+            var Id = document.getElementById('Id').value;
+            var Name = document.getElementById('Name').value;
+            var Code = document.getElementById('Code').value;
+            var TotalStudents = document.getElementById('TotalStudents').value;
+            var Medium = document.getElementById('Medium').value;
+            var Description = document.getElementById('Description').value;
+
+            $.ajax({
+                url: '/Class/Update',
+                type: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    id: Id,
+                    name: Name,
+                    code: Code,
+                    totalStudents: TotalStudents,
+                    medium: Medium,
+                    description: Description
+                }),
+                success: function (res) {
+                    alert(res.message);
+                    $("#classTable tbody").empty();
+                    GetAllClass();
+
+              
+                    document.getElementById('Id').value = "";
+                    document.getElementById('Name').value = "";
+                    document.getElementById('Code').value = "";
+                    document.getElementById('TotalStudents').value = "";
+                    document.getElementById('Medium').value = "";
+                    document.getElementById('Description').value = "";
+
+
+                    document.getElementById("btn").innerText = "Submit";
+
+                },
+                error: function (err) {
+                    alert("Update failed.");
+                    console.error(err);
+                }
+            });
+        }
+                function checkAction() {
+            var Id = document.getElementById('Id').value;
+            if (Id && Id !== "0") {
+                UpdateUser();
+            } else {
+                AddUser();
+            }
+        }
+
+
+          window.onload = () => GetAllClass();
+    </script>

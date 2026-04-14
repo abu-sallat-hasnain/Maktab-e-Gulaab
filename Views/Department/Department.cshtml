@@ -1,0 +1,189 @@
+﻿@{
+    ViewData["Title"] = "Department";
+}
+<div style="border:5px solid;height:900px;width:900px;padding:20px;border-radius:5px;">
+    <div style="border:2px solid;padding:15px;width:600px;margin:auto;border-radius:5px;">
+
+        <form method="post">
+            <center><h2 style="background-color:purple">Department Form</h2></center>
+
+            <input type="hidden" id="DepartmentId" name="DepartmentId">
+
+            <b> <label>Department Name:</label><br><br></b>
+            <input type="text" id="DepartmentName" style="width:600px; height: 30px" name="DepartmentName" required><br><br>
+
+            <b><label>Department Code:</label><br><br></b>
+            <input type="text" id="DepartmentCode" style="width:600px; height: 30px" name="DepartmentCode" required><br><br>
+
+            <b><label>Description:</label><br><br></b>
+            <textarea id="Description" style="width:600px; height: 60px" name="Description"></textarea><br><br>
+
+            <center>
+                <button type="button" id="btn"
+                        style="background:gray; width:100px; height: 30px"
+                        onclick="checkAction()">
+                    Submit
+                </button><br><br><br>
+            </center>
+        </form>
+    </div>
+    <table id="deptTable" border="1" style="width:100%; text-align:center; border-collapse:collapse;">
+        <thead>
+            <tr style="background-color:lightgray;">
+                <th>Department Id</th>
+                <th>Name</th>
+                <th>Code</th>
+                <th>Description</th>
+                <th>Created Date</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+        function AddDepartment() {
+            var data = {
+                DepartmentName: $("#DepartmentName").val(),
+                DepartmentCode: $("#DepartmentCode").val(),
+                Description: $("#Description").val()
+            };
+
+            $.ajax({
+                url: '/Department/Add',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (res) {
+                    alert(res.message);
+                    $("#deptTable tbody").empty();
+                    GetAllDepartments();
+                    clearForm();
+                },
+                error: function (err) {
+                    alert("Insert failed.");
+                    console.error(err);
+                }
+            });
+        }
+
+        function GetAllDepartments() {
+            $.ajax({
+                url: '/Department/GetAll',
+                type: 'GET',
+                success: function (res) {
+                    const tbody = document.querySelector("#deptTable tbody");
+                    tbody.innerHTML = "";
+
+                    res.forEach(dept => {
+                        let row = document.createElement("tr");
+                        row.innerHTML = `
+                            <td>${dept.departmentId}</td>
+                            <td>${dept.departmentName}</td>
+                            <td>${dept.departmentCode}</td>
+                            <td>${dept.description}</td>
+                            <td>${dept.createdDate}</td>
+                            <td>
+                                <button style="background-color:blue;" onclick="getById(${dept.departmentId})">Edit</button>
+                                <button style="background-color:lightgray;" onclick="DeleteDepartment(${dept.departmentId})">Delete</button>
+                            </td>`;
+                        tbody.appendChild(row);
+                    });
+                },
+                error: function (err) {
+                    alert("Failed to load data");
+                    console.error(err);
+                }
+            });
+        }
+
+        function DeleteDepartment(id) {
+            if (!confirm('Are you sure you want to delete this department?')) {
+                return;
+            }
+            $.ajax({
+                url: `/Department/Delete/${id}`,
+                type: 'DELETE',
+                success: function (res) {
+                    alert(res.message);
+                    $("#deptTable tbody").empty();
+                    GetAllDepartments();
+                },
+                error: function (err) {
+                    alert('Delete failed.');
+                    console.error(err);
+                }
+            });
+        }
+
+        function getById(id) {
+            $.ajax({
+                url: '/Department/GetById/' + id,
+                type: "GET",
+                success: function (dept) {
+                    $("#DepartmentId").val(dept.departmentId);
+                    $("#DepartmentName").val(dept.departmentName);
+                    $("#DepartmentCode").val(dept.departmentCode);
+                    $("#Description").val(dept.description);
+
+
+                  document.getElementById("btn").innerText = "Update";
+
+                },
+                error: function (err) {
+                    alert("Failed to fetch department");
+                    console.error(err);
+                }
+            });
+        }
+
+        function UpdateDepartment() {
+            var data = {
+                DepartmentId: $("#DepartmentId").val(),
+                DepartmentName: $("#DepartmentName").val(),
+                DepartmentCode: $("#DepartmentCode").val(),
+                Description: $("#Description").val()
+            };
+
+            $.ajax({
+                url: '/Department/Update',
+                type: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (res) {
+                    alert(res.message);
+                    $("#deptTable tbody").empty();
+                    GetAllDepartments();
+                    clearForm();
+
+
+             document.getElementById("btn").innerText = "Submit";
+
+                },
+                error: function (err) {
+                    alert("Update failed.");
+                    console.error(err);
+                }
+            });
+        }
+
+        function checkAction() {
+            var Id = $("#DepartmentId").val();
+            if (Id && Id !== "0") {
+                UpdateDepartment();
+            } else {
+                AddDepartment();
+            }
+        }
+
+        function clearForm() {
+            $("#DepartmentId").val("");
+            $("#DepartmentName").val("");
+            $("#DepartmentCode").val("");
+            $("#Description").val("");
+        }
+
+        window.onload = () => GetAllDepartments();
+    </script>
